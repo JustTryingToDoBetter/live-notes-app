@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 
-const API_URL = "http://127.0.0.1:8000/api/notes";
+const API_URL = "api/notes";
 
 export default function App() {
   const [notes, setNotes] = useState([]);
