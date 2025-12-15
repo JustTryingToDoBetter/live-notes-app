@@ -35,19 +35,38 @@ class NoteController extends Controller
        
        // Production-grade: Add to Redis Stream instead of Pub/Sub
        // XADD notes_stream * event notes.created data {...}
-       // Using standard xadd with explicit string casting
-       $traceId= (string) Str::uuid(); // Example trace ID generation
-       Redis::xadd('notes_stream', '*', [
+       // Use the underlying phpredis client for reliable XADD.
+       $traceId = (string) Str::uuid();
+       $payload = [
+           'note_id' => (string) $note->id,
+           'title' => $note->title,
+           'content' => $note->content,
+           'created_at' => now()->toIso8601String(),
+       ];
+
+       $fields = [
            'event' => 'notes.created',
-           'data' => (string) json_encode([
-               'note_id' => $note->id,
-               'title' => $note->title,
-               'content' => $note->content,
-               'created_at' => now()->toIso8601String(),
-               'trace_id' => $traceId,
-               'retry_count' => 0
-           ])
-       ]);
+           'note_id' => (string) $note->id,
+           'trace_id' => $traceId,
+           'retry_count' => '0',
+           'payload' => json_encode($payload),
+       ];
+
+       $connection = Redis::connection();
+       $client = $connection->client();
+
+       if (method_exists($client, 'xAdd')) {
+           // phpredis extension
+           $client->xAdd('notes_stream', '*', $fields);
+       } else {
+           // Fallback: raw XADD with flat args
+           $args = ['notes_stream', '*'];
+           foreach ($fields as $k => $v) {
+               $args[] = $k;
+               $args[] = (string) $v;
+           }
+           $connection->command('XADD', $args);
+       }
 
        return response()->json($note, 201);
     }
