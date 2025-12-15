@@ -40,7 +40,7 @@ class NoteController extends Controller
        Redis::xadd('notes_stream', '*', [
            'event' => 'notes.created',
            'data' => (string) json_encode([
-               'id' => $note->id,
+               'note_id' => $note->id,
                'title' => $note->title,
                'content' => $note->content,
                'created_at' => now()->toIso8601String(),
