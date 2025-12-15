@@ -6,6 +6,8 @@ services:
     container_name: live-notes-api
     restart: always
     # No volume mount for code - uses the code inside the image
+    environment:
+      - LOG_CHANNEL=stderr_json
     env_file:
       - ../backend/api/.env
     depends_on:
@@ -33,6 +35,11 @@ services:
     image: redis:7-alpine
     container_name: live-notes-redis
     restart: always
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
     # ports:
     #   - "6379:6379" # Commented out to prevent port leakage
 
@@ -41,3 +48,8 @@ services:
     restart: always
     depends_on:
       - redis
+    healthcheck:
+      test: ["CMD", "test", "-f", "/tmp/healthy"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
