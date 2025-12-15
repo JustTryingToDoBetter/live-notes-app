@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Redis;// Uncomment when Redis is available
 use App\Models\Note;
+use Illuminate\Support\Str;
 
 
 class NoteController extends Controller
@@ -34,16 +35,17 @@ class NoteController extends Controller
        
        // Production-grade: Add to Redis Stream instead of Pub/Sub
        // XADD notes_stream * event notes.created data {...}
-       // Using generic command method to ensure compatibility
-       Redis::command('XADD', [
-           'notes_stream',
-           '*',
-           'event', 'notes.created',
-           'data', json_encode([
+       // Using standard xadd with explicit string casting
+       $traceId= (string) Str::uuid(); // Example trace ID generation
+       Redis::xadd('notes_stream', '*', [
+           'event' => 'notes.created',
+           'data' => (string) json_encode([
                'id' => $note->id,
                'title' => $note->title,
                'content' => $note->content,
-               'created_at' => $note->created_at,
+               'created_at' => now()->toIso8601String(),
+               'trace_id' => $traceId,
+               'retry_count' => 0
            ])
        ]);
 
