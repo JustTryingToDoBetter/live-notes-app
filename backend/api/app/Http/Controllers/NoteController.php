@@ -4,7 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\Redis;
+use Illuminate\Support\Facades\Redis;// Uncomment when Redis is available
 use App\Models\Note;
 
 
@@ -26,7 +26,7 @@ class NoteController extends Controller
             'content'=>'required|string'
         ]));
         Cache::forget('notes.all');
-        Redis::publish('notes.created', json_encode($note));
+        Redis::publish('notes.created', json_encode($note)); // Uncomment when Redis is available
         return response()->json($note, 201);
     }
 
