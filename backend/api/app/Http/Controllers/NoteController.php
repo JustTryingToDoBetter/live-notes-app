@@ -34,9 +34,12 @@ class NoteController extends Controller
        
        // Production-grade: Add to Redis Stream instead of Pub/Sub
        // XADD notes_stream * event notes.created data {...}
-       Redis::xadd('notes_stream', '*', [
-           'event' => 'notes.created',
-           'data' => json_encode([
+       // Using generic command method to ensure compatibility
+       Redis::command('XADD', [
+           'notes_stream',
+           '*',
+           'event', 'notes.created',
+           'data', json_encode([
                'id' => $note->id,
                'title' => $note->title,
                'content' => $note->content,
