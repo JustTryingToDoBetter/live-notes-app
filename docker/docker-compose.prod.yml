@@ -18,25 +18,23 @@ services:
     ports:
       - "8000:80"
     volumes:
-    - "8000:80"
-  volumes:
-    # Laravel public files
-    - ../backend/api:/var/www
+      # Laravel public files
+      - ../backend/api:/var/www
 
-    # React production build
-    - ../frontend/notes-ui/dist:/var/www/frontend/dist
+      # React production build
+      - ../frontend/notes-ui/dist:/var/www/frontend/dist
 
-    # Nginx configuration
-    - ../nginx/default.conf:/etc/nginx/conf.d/default.conf
-  depends_on:
-    - app
+      # Nginx configuration
+      - ../nginx/default.conf:/etc/nginx/conf.d/default.conf
+    depends_on:
+      - app
 
   redis:
     image: redis:7-alpine
     container_name: live-notes-redis
     restart: always
-    ports:
-      - "6379:6379"
+    # ports:
+    #   - "6379:6379" # Commented out to prevent port leakage
 
   notes-processor:
     build: ../services/notes-processor
