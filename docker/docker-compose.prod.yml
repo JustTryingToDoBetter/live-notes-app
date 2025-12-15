@@ -1,0 +1,45 @@
+version: "3.9"
+
+services:
+  app:
+    build: ../backend/api
+    container_name: live-notes-api
+    restart: always
+    # No volume mount for code - uses the code inside the image
+    env_file:
+      - ../backend/api/.env
+    depends_on:
+      - redis
+
+  nginx:
+    build: ../nginx
+    container_name: live-notes-nginx
+    restart: always
+    ports:
+      - "8000:80"
+    volumes:
+    - "8000:80"
+  volumes:
+    # Laravel public files
+    - ../backend/api:/var/www
+
+    # React production build
+    - ../frontend/notes-ui/dist:/var/www/frontend/dist
+
+    # Nginx configuration
+    - ../nginx/default.conf:/etc/nginx/conf.d/default.conf
+  depends_on:
+    - app
+
+  redis:
+    image: redis:7-alpine
+    container_name: live-notes-redis
+    restart: always
+    ports:
+      - "6379:6379"
+
+  notes-processor:
+    build: ../services/notes-processor
+    restart: always
+    depends_on:
+      - redis
