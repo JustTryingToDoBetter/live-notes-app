@@ -21,14 +21,30 @@ class NoteController extends Controller
     }
     // Store a newly created note
     public function store(Request $request){
-        $note = Note::create($request->validate([
-            'title'=>'required|string',
-            'content'=>'required|string'
-        ]));
-        Cache::forget('notes.all');
-        Redis::publish('notes.created', json_encode($note)); // Uncomment when Redis is available
-        return response()->json($note, 201);
-    }
+        // Validate incoming request
+       $validated = $request->validate([
+           'title' => 'required|string|max:255',
+           'content' => 'required|string',
+       ]);
+       // Create and return the new note 
+       // Persist the note to the database
+       $note = Note::create($validated);
+       // Invalidate the cache for all notes
+       // Laravel's Cache facade is used to manage caching
+       
+       // Production-grade: Add to Redis Stream instead of Pub/Sub
+       // XADD notes_stream * event notes.created data {...}
+       Redis::xadd('notes_stream', '*', [
+           'event' => 'notes.created',
+           'data' => json_encode([
+               'id' => $note->id,
+               'title' => $note->title,
+               'content' => $note->content,
+               'created_at' => $note->created_at,
+           ])
+       ]);
 
+       return response()->json($note, 201);
+    }
 
 }
