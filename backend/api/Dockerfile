@@ -29,16 +29,21 @@ WORKDIR /var/www
 # Copy composer files first (better layer caching)
 COPY composer.json composer.lock ./
 
-# Install PHP dependencies inside the container
+# Install Composer
 RUN curl -sS https://getcomposer.org/installer | php \
-    && mv composer.phar /usr/local/bin/composer \
-    && composer install --no-dev --no-interaction --prefer-dist
+    && mv composer.phar /usr/local/bin/composer
+
+# Install PHP dependencies (without scripts first)
+RUN composer install --no-dev --no-interaction --prefer-dist --no-scripts
 
 # Copy the rest of the Laravel application
 COPY . .
 
+# Run post-autoload scripts (now that artisan exists)
+RUN composer dump-autoload --optimize
+
 # Fix permissions for Laravel storage & cache
-RUN chown -R www-data:www-data storage bootstrap/cache
+RUN chown -R www-data:www-data storage bootstrap/cache database
 
 # Expose the PHP-FPM port
 EXPOSE 9000
