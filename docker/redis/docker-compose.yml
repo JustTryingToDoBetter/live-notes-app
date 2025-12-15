@@ -1,0 +1,13 @@
+version: "3.9"
+
+services:
+  redis:
+    image: redis:7-alpine
+    container_name: live-notes-redis
+    ports:
+      - "6379:6379"
+
+  notes-processor:
+    build: ../../services/notes-processor
+    depends_on:
+      - redis
