@@ -46,10 +46,14 @@ services:
   notes-processor:
     build: ../services/notes-processor
     restart: always
+    ports:
+      - "9090:8080"  # Expose /health and /metrics
+    environment:
+      - HEALTH_PORT=8080
     depends_on:
       - redis
     healthcheck:
-      test: ["CMD", "test", "-f", "/tmp/healthy"]
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
       interval: 10s
       timeout: 5s
       retries: 3
